@@ -15,8 +15,8 @@ pygame.init()
 #Inicia a font do pygame
 pygame.font.init()
 #Inicializa o mixer
-pygame.mixer.pre_init(44100, 32, 2, 4096)
-ost = pygame.mixer.Sound('resources\\teste.wav')
+#pygame.mixer.pre_init(44100, 32, 2, 4096)
+#ost = pygame.mixer.Sound('resources\\teste.wav')
 
 # Classe que representa a tela
 class Tela():
@@ -38,9 +38,9 @@ class Game():
         self.score = 0
         self.font_name = 'NasalizationRg-Regular'#pygame.font.get_default_font()
         self.game_font = pygame.font.SysFont(self.font_name, 20)
-        self.HPAsteroid = 3
+        self.HPAsteroid = 1
         self.fase = 1
-        self.asteroids = 5
+        self.asteroids = 2
         self.modo = 1
         self.bossWave = 5
         #ost.play() 
@@ -174,7 +174,7 @@ class Tiro(pygame.sprite.Sprite):
         self.altura = 31
         self.largura = 5
         self.angulo = angulo
-        self.speed = 15
+        self.speed = speedrace
         self.x = x
         self.y = y
         self.rect = pygame.Rect(self.x+34, self.y+37, self.largura, self.altura)
@@ -254,22 +254,36 @@ def colisaoTiros(tiros, asteroids):
         for j in range(len(asteroids)):
             if (tiros[i].rect.colliderect(asteroids[j].rect)):
                 asteroids[j].dano += 1
-                if (asteroids[j].dano >= game.HPAsteroid):
-                    if asteroids[j].tamx == 78:
-                        for x in range(4):
-                            asteroids.append(Asteroid())
-                            asteroids[len(asteroids)-1].tamx = 50
-                            asteroids[len(asteroids)-1].tamy = 50
-                            asteroids[len(asteroids)-1].x = asteroids[j].x
-                            asteroids[len(asteroids)-1].y = asteroids[j].y
-                            asteroids[len(asteroids)-1].speed = 2.5     
-                    del asteroids[j]
-                    delTiro = i
-                    break
+                #if (asteroids[j].dano >= game.HPAsteroid):
+                #    if asteroids[j].tamx == 78:
+                #        for x in range(4):
+                #            asteroids.append(Asteroid())
+                #            asteroids[len(asteroids)-1].tamx = 50
+                #            asteroids[len(asteroids)-1].tamy = 50
+                #            asteroids[len(asteroids)-1].x = asteroids[j].x
+                #            asteroids[len(asteroids)-1].y = asteroids[j].y
+                #            asteroids[len(asteroids)-1].speed = 2.5     
+                del asteroids[j]
+                delTiro = i
+                break
         if delTiro > -1:
             del tiros[delTiro]
             delTiro = -1
             game.atualizaScore(50)
+            break
+
+def colisaoTirosIni(tiros, tirosImimigo):
+    delTiro = -1
+    for i in range(len(tiros)):
+        for j in range(len(tirosInimigo)):
+            if (tiros[i].rect.colliderect(tirosInimigo[j].rect)):
+                del tirosInimigo[j]
+                delTiro = i
+                break
+        if delTiro > -1:
+            del tiros[delTiro]
+            delTiro = -1
+            game.atualizaScore(25)
             break
 
 #Caso os tiros saiam da tela eles são deletados para n consumir tanta memoria                        
@@ -333,7 +347,9 @@ def main(altura,largura,controle):
     contAsteroids = 0
     tamTiros = 0
     clock = pygame.time.Clock()
-    asteroids = []  
+    asteroids = []
+    global speedrace
+    speedrace = 15
     #background = pygame.image.load(tela.background).convert()
     #background = pygame.transform.scale(background, (tela.largura,tela.altura) )
 
@@ -381,6 +397,10 @@ def main(altura,largura,controle):
             nave.viraEsquerda()
         if tecla_pressionada[K_RIGHT] and game.modo == 1:
             nave.viraDireita()
+        if tecla_pressionada[K_UP] and game.modo == 1:
+            speedrace += 5
+        if tecla_pressionada[K_DOWN] and game.modo == 1:
+            speedrace -= 5
 
         screen.fill(BLACK)
         
@@ -415,6 +435,7 @@ def main(altura,largura,controle):
                 
         #verifica a colição dos asteroids com os tiros
         colisaoTiros(tiros,asteroids)
+        colisaoTirosIni(tiros,tirosInimigo)
         #verifica se necessario deletar os tiros do inimigo e da nave
         removeTiros(tiros)
         removeTirosInim(tirosInimigo)
@@ -423,8 +444,8 @@ def main(altura,largura,controle):
         #HUD
         scoreText = game.game_font.render('Score: ' + str(game.score), 1, (255, 255, 255))
         screen.blit(scoreText, (10, 5))
-        vidasText = game.game_font.render('Vidas: ' + str(nave.vidas), 1, (255, 255, 255))
-        screen.blit(vidasText, (250, 5))
+        #vidasText = game.game_font.render('Vidas: ' + str(nave.vidas), 1, (255, 255, 255))
+        #screen.blit(vidasText, (250, 5))
         waveText = game.game_font.render('Wave: ' + str(game.fase), 1, (255, 255, 255))
         screen.blit(waveText, (400, 5))
         asteroidsText = game.game_font.render('Aviões: ' + str(len(asteroids)), 1, (255, 255, 255))
@@ -432,14 +453,14 @@ def main(altura,largura,controle):
         
         pygame.display.flip()
 
-        if nave.vidas <= 0:
-            quit()
+        #if nave.vidas <= 0:
+        #    quit()
         
         #Caso acabem os asteroids e não seja uma batalha de boss cria novos asteroids
         #acrescenta uma vida para o jogador
         if(len(asteroids) == 0 and estFase):
             game.fase += 1
-            game.asteroids += 5
+            game.asteroids += 2
             nave.vidas += 1
             estFase = False
             contAsteroids = 0
